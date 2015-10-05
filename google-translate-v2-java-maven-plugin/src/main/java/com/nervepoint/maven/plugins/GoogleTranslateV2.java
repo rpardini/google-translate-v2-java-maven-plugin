@@ -293,10 +293,10 @@ public class GoogleTranslateV2 extends AbstractMojo {
         File previousTranslation = new File(sourceCacheDir, baseName + "_"
                 + language + ".properties");
 
-        Properties sourceProperties;
-        Properties translated = new Properties();
-        Properties override;
-        Properties cached;
+        PropertiesWithoutComments sourceProperties;
+        PropertiesWithoutComments translated = new PropertiesWithoutComments();
+        PropertiesWithoutComments override;
+        PropertiesWithoutComments cached;
 
         sourceProperties = loadProperties(sourceFile, "source", true);
         override = loadProperties(overrideFile, "override", false);
@@ -426,12 +426,12 @@ public class GoogleTranslateV2 extends AbstractMojo {
         }
     }
 
-    private Properties loadProperties(File path, String type, boolean isUTF8)
+    private PropertiesWithoutComments loadProperties(File path, String type, boolean isUTF8)
             throws UnsupportedEncodingException, IOException {
         if (path.exists()) {
             getLog().info("Loading " + type + " file " + path.getAbsolutePath());
         }
-        Properties p = new Properties();
+        PropertiesWithoutComments p = new PropertiesWithoutComments();
         try {
             FileInputStream in = new FileInputStream(path);
             try {
