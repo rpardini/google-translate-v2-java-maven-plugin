@@ -31,13 +31,19 @@ import java.util.regex.Pattern;
  * @requiresProject false
  */
 public class GoogleTranslateV2 extends AbstractMojo {
+// ------------------------------ FIELDS ------------------------------
+
+    private static Translate client;
+
+    /**
+     * @parameter
+     */
+    boolean recurse;
 
     private final JsonFactory JSON_FACTORY = JacksonFactory
             .getDefaultInstance();
 
     private HttpTransport httpTransport;
-
-    private static Translate client;
 
     /**
      * @parameter expression="${api.key} default-value=""
@@ -53,11 +59,6 @@ public class GoogleTranslateV2 extends AbstractMojo {
      * @parameter
      */
     private FileSet fileSet;
-
-    /**
-     * @parameter
-     */
-    boolean recurse;
 
     /**
      * @parameter expression="${basedir}/target/classes"
@@ -111,8 +112,12 @@ public class GoogleTranslateV2 extends AbstractMojo {
 
     private PatternReplacer replacer;
 
-    public void execute() throws MojoExecutionException, MojoFailureException {
+// ------------------------ INTERFACE METHODS ------------------------
 
+
+// --------------------- Interface Mojo ---------------------
+
+    public void execute() throws MojoExecutionException, MojoFailureException {
         if (apikey == null) {
             getLog().info(
                     "Translation will not be performed because there is no API key available");
@@ -169,7 +174,6 @@ public class GoogleTranslateV2 extends AbstractMojo {
                     .build();
 
             try {
-
                 File source = new File(sourceDirectory);
                 processDirectory(source, new File(targetDirectory),
                         rootCacheDir);
@@ -187,13 +191,13 @@ public class GoogleTranslateV2 extends AbstractMojo {
         }
 
         throw new MojoFailureException("Translation failed due ot previous exceptions");
-
     }
+
+// -------------------------- OTHER METHODS --------------------------
 
     @SuppressWarnings("unchecked")
     private void processDirectory(File sourceDir, File destinationDir,
                                   File sourceCacheDir) throws IOException, URISyntaxException {
-
         getLog().info("Using source directory " + sourceDir.getAbsolutePath());
         getLog().info(
                 "Using target directory " + destinationDir.getAbsolutePath());
@@ -201,7 +205,6 @@ public class GoogleTranslateV2 extends AbstractMojo {
         destinationDir.mkdirs();
 
         if (!sourceDir.exists()) {
-
             if (failOnMissingSourceDir) {
                 throw new IOException(
                         "sourceDirectory "
@@ -260,16 +263,13 @@ public class GoogleTranslateV2 extends AbstractMojo {
                 translateFile(p, base, dest, destCache);
             }
         }
-
     }
 
     private void translateFile(File sourceFile, String baseName,
                                File desintationDir, File sourceCacheDir) throws IOException,
             URISyntaxException {
-
         StringTokenizer t = new StringTokenizer(languages, ",");
         while (t.hasMoreTokens()) {
-
             String l = t.nextToken();
 
             if (baseName.endsWith("_" + l)) {
@@ -281,15 +281,12 @@ public class GoogleTranslateV2 extends AbstractMojo {
 
             translateFileToLanguage(sourceFile, baseName, desintationDir,
                     sourceCacheDir, l);
-
         }
-
     }
 
     private void translateFileToLanguage(File sourceFile, String baseName,
                                          File destinationDir, File sourceCacheDir, String language)
             throws IOException, URISyntaxException {
-
         sourceCacheDir.mkdirs();
 
         getLog().info("Translating " + sourceFile.getName() + " to " + language);
@@ -399,7 +396,6 @@ public class GoogleTranslateV2 extends AbstractMojo {
         List<String> toTranslateKeys = new ArrayList<String>();
         int characters = 0;
         for (String name : p.stringPropertyNames()) {
-
             // The unprocessed content from the base resource file
             String originalContent = p.getProperty(name);
 
@@ -417,7 +413,6 @@ public class GoogleTranslateV2 extends AbstractMojo {
                 continue;
             } else */
             if (cached.containsKey(name)) {
-
                 String c = cached.getProperty(name);
                 int idx = c.indexOf('|');
                 String h = c.substring(0, idx);
@@ -438,7 +433,6 @@ public class GoogleTranslateV2 extends AbstractMojo {
             characters += processed.length();
 
             if (characters > 4000) {
-
                 getLog().info("Translating " + characters + " characters");
                 List<TranslationsResource> translations = translate(toTranslateValues, sourceLanguage, language);
 
@@ -461,7 +455,6 @@ public class GoogleTranslateV2 extends AbstractMojo {
         }
 
         if (characters > 0) {
-
             getLog().info("Translating " + characters + " characters [final translation for this module]");
 
             List<TranslationsResource> translations = translate(toTranslateValues, sourceLanguage, language);
@@ -511,12 +504,34 @@ public class GoogleTranslateV2 extends AbstractMojo {
                 out.close();
             }
         }
+    }
 
+    private Properties loadProperties(File path, String type)
+            throws UnsupportedEncodingException, IOException {
+        if (path.exists()) {
+            getLog().info("Loading " + type + " file " + path.getAbsolutePath());
+        }
+        Properties p = new Properties();
+        try {
+            FileInputStream in = new FileInputStream(path);
+            try {
+                p.load(in);
+            } finally {
+                in.close();
+            }
+        } catch (FileNotFoundException ex) {
+            if (type.equals("cache")) {
+                getLog().warn(
+                        "Could not find cache file "
+                                + path
+                                + " so a complete translation will be performed");
+            }
+        }
 
+        return p;
     }
 
     List<TranslationsResource> translate(List<String> sources, String sourceLang, String targetLang) throws IOException {
-
         if (false) {
             Translate.Translations.List res = client.translations().list(sources,
                     targetLang);
@@ -524,25 +539,17 @@ public class GoogleTranslateV2 extends AbstractMojo {
             TranslationsListResponse c = res.execute();
 
             return c.getTranslations();
-
         } else {
-
-
             ArrayList<TranslationsResource> translationsResources = new ArrayList<TranslationsResource>();
 
             for (String sourceString : sources) {
-
                 TranslationsResource trans = new TranslationsResource();
                 trans.setTranslatedText(replaceForKlingonChars(sourceString));
                 translationsResources.add(trans);
-
-
             }
 
 
             return translationsResources;
-
-
         }
     }
 
@@ -571,36 +578,6 @@ public class GoogleTranslateV2 extends AbstractMojo {
         return klingonizedMessage;
     }
 
-    /**
-     * Okay klingon messages are funny, but some times we mess the message up by klingonizing characters that we
-     * don't want. The solution is unklingozine the knowing characters.
-     * Example: "Hello {0}", klingon: "H3ll0 {Ó}", correct: "H3ll0 {0}"
-     *
-     * @param s
-     * @return The unklingonized characters message
-     */
-    private String unKlingonizeMissedChars(String s) {
-
-        Map<String, String> tokens = new HashMap<String, String>();
-        tokens.put("A", "{4}");
-        tokens.put("Ê", "{3}");
-        tokens.put("î", "{1}");
-        tokens.put("Ó", "{0}");
-
-        String patternString = "\\{(" + StringUtils.join(tokens.keySet(), "|") + ")\\}";
-        Pattern pattern = Pattern.compile(patternString);
-        Matcher matcher = pattern.matcher(s);
-
-        StringBuffer sb = new StringBuffer();
-
-        while (matcher.find()) {
-            matcher.appendReplacement(sb, tokens.get(matcher.group(1)));
-        }
-        matcher.appendTail(sb);
-        return sb.toString();
-
-    }
-
     private Map<String, String> getTokensMap() {
         Map<String, String> tokens = new HashMap<String, String>();
         tokens.put("A", "4");
@@ -625,6 +602,33 @@ public class GoogleTranslateV2 extends AbstractMojo {
         return tokens;
     }
 
+    /**
+     * Okay klingon messages are funny, but some times we mess the message up by klingonizing characters that we
+     * don't want. The solution is unklingozine the knowing characters.
+     * Example: "Hello {0}", klingon: "H3ll0 {Ó}", correct: "H3ll0 {0}"
+     *
+     * @param s
+     * @return The unklingonized characters message
+     */
+    private String unKlingonizeMissedChars(String s) {
+        Map<String, String> tokens = new HashMap<String, String>();
+        tokens.put("A", "{4}");
+        tokens.put("Ê", "{3}");
+        tokens.put("î", "{1}");
+        tokens.put("Ó", "{0}");
+
+        String patternString = "\\{(" + StringUtils.join(tokens.keySet(), "|") + ")\\}";
+        Pattern pattern = Pattern.compile(patternString);
+        Matcher matcher = pattern.matcher(s);
+
+        StringBuffer sb = new StringBuffer();
+
+        while (matcher.find()) {
+            matcher.appendReplacement(sb, tokens.get(matcher.group(1)));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
 
     private String hash(String content) {
         try {
@@ -637,30 +641,4 @@ public class GoogleTranslateV2 extends AbstractMojo {
             throw new IllegalStateException("");
         }
     }
-
-    private Properties loadProperties(File path, String type)
-            throws UnsupportedEncodingException, IOException {
-        if (path.exists()) {
-            getLog().info("Loading " + type + " file " + path.getAbsolutePath());
-        }
-        Properties p = new Properties();
-        try {
-            FileInputStream in = new FileInputStream(path);
-            try {
-                p.load(in);
-            } finally {
-                in.close();
-            }
-        } catch (FileNotFoundException ex) {
-            if (type.equals("cache")) {
-                getLog().warn(
-                        "Could not find cache file "
-                                + path
-                                + " so a complete translation will be performed");
-            }
-        }
-
-        return p;
-    }
-
 }

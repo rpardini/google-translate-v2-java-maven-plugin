@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.pardini</groupId>
     <artifactId>google-translate-v2-java-maven-plugin-fake</artifactId>
-    <version>0.0.5</version>
+    <version>0.0.6</version>
 
     <packaging>maven-plugin</packaging>
 
@@ -126,7 +126,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
+            <!--<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <executions>
@@ -137,7 +137,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>

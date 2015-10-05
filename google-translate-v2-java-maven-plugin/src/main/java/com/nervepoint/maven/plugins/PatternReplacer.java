@@ -6,6 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PatternReplacer {
+// ------------------------------ FIELDS ------------------------------
 
     /**
      * A string that the translate API will not translate. This is the best I
@@ -19,11 +20,38 @@ public class PatternReplacer {
     private List<String> patterns = new ArrayList<String>();
     private List<String> contentMap = new ArrayList<String>();
 
+// --------------------------- CONSTRUCTORS ---------------------------
+
     public PatternReplacer() {
+    }
+
+// --------------------------- main() method ---------------------------
+
+    public static void main(String[] args) {
+        PatternReplacer pr = new PatternReplacer();
+        pr.addPattern("\\$\\{\\w*\\}");
+        pr.addPattern("\\%\\{\\w*\\}");
+        check(pr, "This text translates, ${thisDoesNot}, ${or1}, %{or2}, ${this1}, %{this2}, but this does");
+        check(pr, "And now with NOTHING to replace");
+        check(pr, "And now with another pattern {0}");
     }
 
     public void addPattern(String pattern) {
         patterns.add(pattern);
+    }
+
+    private static void check(PatternReplacer pr, String original) {
+        System.out.println("Original:" + original);
+        String preProcessed = pr.preProcess(original);
+        System.out.println("Pre-processed:" + preProcessed);
+        String postProcessed = pr.postProcess(preProcessed);
+        System.out.println("Post-processed:" + postProcessed);
+        System.out.println(postProcessed);
+        if (postProcessed.equals(original)) {
+            System.out.println("Replaced as expected");
+        } else {
+            System.out.println("Failed!");
+        }
     }
 
     public String preProcess(String content) {
@@ -55,35 +83,11 @@ public class PatternReplacer {
         int idx;
         for (String s : contentMap) {
             idx = content.indexOf(UNTRANSLATABLE_STRING);
-            if(idx == -1) {
+            if (idx == -1) {
                 throw new RuntimeException("Expected to find an untranslateable string, but there was not one. The string we were given was '" + originalContent + "'. So far, we replace variables so it contains '" + content + "'. The content map contains " + contentMap.size() + " variables that should be replaced.");
             }
             content = content.substring(0, idx) + s + content.substring(idx + UNTRANSLATABLE_STRING.length());
         }
         return content;
-    }
-
-    public static void main(String[] args) {
-        PatternReplacer pr = new PatternReplacer();
-        pr.addPattern("\\$\\{\\w*\\}");
-        pr.addPattern("\\%\\{\\w*\\}");
-        check(pr, "This text translates, ${thisDoesNot}, ${or1}, %{or2}, ${this1}, %{this2}, but this does");
-        check(pr, "And now with NOTHING to replace");
-        check(pr, "And now with another pattern {0}");
-
-    }
-
-    private static void check(PatternReplacer pr, String original) {
-        System.out.println("Original:" + original);
-        String preProcessed = pr.preProcess(original);
-        System.out.println("Pre-processed:" + preProcessed);
-        String postProcessed = pr.postProcess(preProcessed);
-        System.out.println("Post-processed:" + postProcessed);
-        System.out.println(postProcessed);
-        if (postProcessed.equals(original)) {
-            System.out.println("Replaced as expected");
-        } else {
-            System.out.println("Failed!");
-        }
     }
 }
