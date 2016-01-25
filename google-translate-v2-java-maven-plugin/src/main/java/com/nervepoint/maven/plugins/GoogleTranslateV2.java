@@ -481,10 +481,10 @@ public class GoogleTranslateV2 extends AbstractMojo {
     }
 
     private String fixLangForGoogle(String sourceLang, boolean isSource) {
-        switch (sourceLang) {
-            case "pt_BR": return "pt";
-            case "en_US": return "en";
-            case "es_ES": return "es";
+        switch (sourceLang.toLowerCase()) {
+            case "pt_br": return "pt";
+            case "en_us": return "en";
+            case "es_es": return "es";
         }
         throw new RuntimeException("I don' know how to googlify language " + sourceLang);
 
